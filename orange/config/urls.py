@@ -16,6 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from member.views import index, input_form
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', index, name="index"),
+    path('input-form/', input_form, name="input_form"),
 ]
