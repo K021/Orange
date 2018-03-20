@@ -3,6 +3,14 @@ import random
 from member.models import Member, TeamBase
 
 
+FACTOR_LEADER = 'leader'
+FACTOR_CLOUDER = 'clouder'
+FACTOR_SEX = 'sex'
+FACTOR_ACTIVITY = 'activity'
+FACTOR_AGE = 'age'
+FACTOR_CLOSENESS = 'closeness'
+
+
 def orange_group(teambase_pk, number_of_group):
     member_list = []        # 분류할 멤버 리스트
     distributions = []      # 필터링을 거칠 랜덤 분포 목록
@@ -19,17 +27,19 @@ def orange_group(teambase_pk, number_of_group):
         t = random_group(member_list, number_of_group)
         distributions.append(t)
 
+    # [factor, standard_avg, error rate]
     standard_avg_list = [
-        ['age', teambase.get_standard_avg_age(), 0.3],
-        ['closeness', teambase.get_standard_avg_closeness(), 0.3],
-        ['activity', teambase.get_standard_avg_activity(), 0.2],
-        ['leader', teambase.get_standard_avg_leader(), 0.1],
-        ['clouder', teambase.get_standard_avg_clouder(), 0.1],
-        ['sex', teambase.get_standard_avg_sex(), 0.2],
+        [FACTOR_AGE, teambase.get_standard_avg_age(), 0.3],
+        [FACTOR_CLOSENESS, teambase.get_standard_avg_closeness(), 0.3],
+        [FACTOR_ACTIVITY, teambase.get_standard_avg_activity(), 0.2],
+        [FACTOR_LEADER, teambase.get_standard_avg_leader(), 0.1],
+        [FACTOR_CLOUDER, teambase.get_standard_avg_clouder(), 0.1],
+        [FACTOR_SEX, teambase.get_standard_avg_sex(), 0.2],
     ]
 
     # 분포 적합성 평가
     i = 0
+    print('start_with', len(distributions))
     for standard_avg in standard_avg_list:
         i += 1
         print('process #', i)
@@ -59,7 +69,7 @@ def orange_group(teambase_pk, number_of_group):
     # avg_sex = 0
     # avg_activity = 0
     # avg_age = 0
-    # avg_closness = 0
+    # avg_closeness = 0
     # print('LIST OF AVERAGE VALUE OF TEAM MEMBERS')
     # for index, distribution in enumerate(survived_distribs):
     #     print(f'team #{index+1}')
@@ -71,20 +81,20 @@ def orange_group(teambase_pk, number_of_group):
     #             avg_sex += member.sex
     #             avg_activity += member.activity
     #             avg_age += member.age
-    #             avg_closness += avg_closness
+    #             avg_closeness += avg_closeness
     #         avg_leader = avg_leader/len(team)
     #         avg_clouder = avg_clouder/len(team)
     #         avg_sex = avg_sex/len(team)
     #         avg_activity = avg_activity/len(team)
     #         avg_age = avg_age/len(team)
-    #         avg_closness = avg_closness/len(team)
+    #         avg_closeness = avg_closeness/len(team)
     #
     # print('avg_leader', avg_leader)
     # print('avg_clouder', avg_clouder)
     # print('avg_sex', avg_sex)
     # print('avg_activity', avg_activity)
     # print('avg_age', avg_age)
-    # print('avg_closness', avg_closness)
+    # print('avg_closeness', avg_closeness)
 
     return survived_distribs
 
@@ -103,7 +113,7 @@ def random_group(member_list, number_of_group):
     return group_list
 
 
-def pass_assessment(distribution, factor, standard_avg, error_rate=0.5):
+def pass_assessment(distribution, factor, standard_avg, error_rate=0.1):
     """
     주어진 분포의 특정 요소 분포도가 평균치와 오차범위 내에서 일치하는가를 판단하는 함수
     쉽게 말해 잘 분배되었는가, 한 쪽으로 쏠리지는 않았는 가를 판단하는 함수
@@ -120,7 +130,7 @@ def pass_assessment(distribution, factor, standard_avg, error_rate=0.5):
         deviation_of_team = abs(standard_avg - avg_of_team)     # 표준편차
         summation += deviation_of_team
     avg_deviation_of_group = summation/len(distribution)        # 표준편차의 평균
-    if avg_deviation_of_group <= error_rate:    # 패스 조건. 오차율보다 평균편차가 적을 때
+    if avg_deviation_of_group <= error_rate*standard_avg:    # 패스 조건. 오차율보다 평균편차가 적을 때
         return True
     return False
 
@@ -134,22 +144,22 @@ def average(team, factor):
     :return: average of a certain factor in a given member list
     """
     summation = 0
-    if factor == 'sex':
+    if factor == FACTOR_SEX:
         for pk in team:
             summation += Member.objects.get(pk=pk).sex
-    elif factor == 'leader':
+    elif factor == FACTOR_LEADER:
         for pk in team:
             summation += Member.objects.get(pk=pk).leader
-    elif factor == 'clouder':
+    elif factor == FACTOR_CLOUDER:
         for pk in team:
             summation += Member.objects.get(pk=pk).clouder
-    elif factor == 'age':
+    elif factor == FACTOR_AGE:
         for pk in team:
             summation += Member.objects.get(pk=pk).age
-    elif factor == 'activity':
+    elif factor == FACTOR_ACTIVITY:
         for pk in team:
             summation += Member.objects.get(pk=pk).activity
-    elif factor == 'closeness':
+    elif factor == FACTOR_CLOSENESS:
         for pk in team:
             summation += Member.objects.get(pk=pk).get_avg_of_closeness()
     return summation/len(team)
